@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premusic — Premium Equalizer</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root {
+    --bg: #000000;
+    --surface: #0a0a0d;
+    --surface-2: #131318;
+    --surface-3: #1c1c24;
+    --border: #25252e;
+    --border-strong: #3a3a44;
+    --text: #f4f4f6;
+    --text-dim: #a8a8b0;
+    --text-muted: #62626a;
+    --accent: #4de8d4;
+    --accent-dim: #2a9888;
+    --accent-glow: rgba(77, 232, 212, 0.45);
+    --stereo-l: #4dd6ff;
+    --stereo-r: #ff5e9c;
+    --gold: #d4b065;
+    --danger: #ff5252;
+  }
+  * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    background: radial-gradient(ellipse at center, #0a0a10 0%, #050505 60%, #000 100%);
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(77, 232, 212, 0.05), transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(255, 94, 156, 0.04), transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .font-display { font-family: 'Space Grotesk', sans-serif; }
+  /* Phone frame */
+  .phone-frame {
+    width: 390px;
+    height: 844px;
+    background: var(--bg);
+    border-radius: 54px;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      inset 0 0 0 2px #1c1c22,
+      0 0 0 11px #0a0a0d,
+      0 0 0 12px #2a2a30,
+      0 0 0 13px #0a0a0d,
+      0 50px 100px -20px rgba(77, 232, 212, 0.15),
+      0 30px 80px -30px rgba(0, 0, 0, 0.95);
+    z-index: 1;
+  }
+  @media (max-height: 900px) { .phone-frame { transform: scale(0.92); } }
+  @media (max-height: 800px) { .phone-frame { transform: scale(0.82); } }
+  @media (max-height: 720px) { .phone-frame { transform: scale(0.72); } }
+  .island {
+    position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+    width: 122px; height: 34px; background: #000;
+    border-radius: 20px; z-index: 100;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+  }
+  .status-bar {
+    height: 54px; padding: 19px 30px 0;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 14px; font-weight: 600;
+    position: relative; z-index: 50;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .status-icons { display: flex; gap: 6px; align-items: center; font-size: 13px; }
+  .screen-area {
+    position: absolute; top: 54px; left: 0; right: 0; bottom: 0; overflow: hidden;
+  }
+  .screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    opacity: 0; pointer-events: none;
+    transform: translateX(20px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    overflow-y: auto; overflow-x: hidden;
+  }
+  .screen::-webkit-scrollbar { width: 0; display: none; }
+  .screen.active { opacity: 1; pointer-events: auto; transform: translateX(0); }
+  /* Splash */
+  .splash-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 45%, rgba(77, 232, 212, 0.18) 0%, transparent 50%), #000;
+  }
+  .splash-content {
+    position: relative; z-index: 2;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 100%; padding: 0 40px;
+  }
+  .splash-logo {
+    width: 96px; height: 96px; border-radius: 28px;
+    background: linear-gradient(135deg, #1a1a20, #0a0a0d);
+    border: 1px solid rgba(77, 232, 212, 0.2);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 60px rgba(77, 232, 212, 0.25), inset 0 1px 0 rgba(255,255,255,0.06);
+    position: relative;
+  }
+  @keyframes splashFadeIn { 0% { opacity: 0; transform: scale(0.7); } 100% { opacity: 1; transform: scale(1); } }
+  @keyframes splashFadeUp { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
+  .splash-anim-1 { animation: splashFadeIn 1s 0.2s ease-out both; }
+  .splash-anim-2 { animation: splashFadeUp 0.8s 0.8s ease-out both; }
+  .splash-anim-3 { animation: splashFadeUp 0.8s 1.2s ease-out both; }
+  @keyframes loadingDot { 0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
+  .loading-dot {
+    width: 6px; height: 6px; background: var(--accent);
+    border-radius: 50%; display: inline-block;
+    animation: loadingDot 1.4s ease-in-out infinite;
+    box-shadow: 0 0 6px var(--accent);
+  }
+  .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+  /* EQ slider */
+  .eq-band { display: flex; flex-direction: column; align-items: center; gap: 6px; user-select: none; }
+  .eq-track {
+    width: 14px; height: 180px;
+    background: linear-gradient(to bottom, rgba(77, 232, 212, 0.08), rgba(255,255,255,0.04) 50%, rgba(255, 94, 156, 0.06));
+    border-radius: 6px; position: relative; cursor: pointer; touch-action: none;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .eq-track::before {
+    content: ''; position: absolute; top: 50%; left: 3px; right: 3px;
+    height: 1px; background: rgba(255,255,255,0.12); z-index: 1;
+  }
+  .eq-fill {
+    position: absolute; left: 3px; right: 3px; border-radius: 3px;
+    pointer-events: none; transition: none;
+  }
+  .eq-thumb {
+    position: absolute; left: 50%; transform: translate(-50%, -50%);
+    width: 22px; height: 12px; border-radius: 6px;
+    background: linear-gradient(to bottom, #f4f4f6 0%, #c8c8d0 100%);
+    box-shadow: 0 0 14px var(--accent-glow), 0 2px 4px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.8);
+    pointer-events: none; z-index: 3;
+    border: 0.5px solid rgba(0,0,0,0.2);
+  }
+  .eq-value-label {
+    font-size: 9px; color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    font-family: 'Space Grotesk', sans-serif; min-height: 12px; font-weight: 600;
+  }
+  .eq-freq-label {
+    font-size: 8px; color: var(--text-dim);
+    font-family: 'Space Grotesk', sans-serif; font-weight: 500;
+    letter-spacing: 0.02em; white-space: nowrap;
+  }
+  .db-scale {
+    display: flex; flex-direction: column; justify-content: space-between;
+    height: 180px; font-size: 9px; color: var(--text-muted);
+    font-family: 'Space Grotesk', sans-serif;
+    padding: 0 4px 0 2px; text-align: right;
+    font-variant-numeric: tabular-nums; font-weight: 500;
+  }
+  /* Knob */
+  .knob-container { display: flex; flex-direction: column; align-items: center; gap: 8px; user-select: none; cursor: grab; }
+  .knob-container:active { cursor: grabbing; }
+  .knob {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #2a2a32, #141418 60%, #0a0a0d);
+    box-shadow: 0 0 16px rgba(77, 232, 212, 0.12), 0 4px 8px rgba(0,0,0,0.5), inset 0 2px 3px rgba(255,255,255,0.08), inset 0 -2px 3px rgba(0,0,0,0.5);
+    position: relative; touch-action: none;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .knob-indicator {
+    position: absolute; top: 6px; left: 50%;
+    transform: translateX(-50%);
+    width: 3px; height: 12px;
+    background: var(--accent); border-radius: 2px;
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+  .knob-ring { position: absolute; inset: -6px; pointer-events: none; }
+  /* Visualizer */
+  .visualizer-container {
+    position: relative; height: 130px;
+    background: linear-gradient(to bottom, rgba(20,20,24,0.6), rgba(10,10,13,0.4));
+    border-radius: 16px; border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .vu-bar { flex: 1; height: 5px; background: rgba(255,255,255,0.04); border-radius: 3px; overflow: hidden; position: relative; }
+  .vu-fill { height: 100%; border-radius: 3px; transition: width 0.05s linear; }
+  /* Buttons */
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent) 0%, #2db8a5 100%);
+    color: #001815; font-weight: 600;
+    box-shadow: 0 0 30px rgba(77, 232, 212, 0.35), 0 4px 12px rgba(0,0,0,0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 0 40px rgba(77, 232, 212, 0.5); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-ghost { background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text-dim); transition: all 0.15s; }
+  .btn-ghost:hover { background: rgba(255,255,255,0.08); border-color: var(--border-strong); color: var(--text); }
+  /* Cards */
+  .card {
+    background: linear-gradient(180deg, rgba(28,28,36,0.6), rgba(20,20,24,0.4));
+    border: 1px solid var(--border);
+    border-radius: 18px; position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent);
+  }
+  /* Preset chip */
+  .preset-chip {
+    padding: 7px 14px; background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border); border-radius: 100px;
+    color: var(--text-dim); font-size: 12px; font-weight: 500;
+    white-space: nowrap; cursor: pointer; transition: all 0.2s;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .preset-chip.active {
+    background: rgba(77, 232, 212, 0.1);
+    border-color: rgba(77, 232, 212, 0.4);
+    color: var(--accent);
+    box-shadow: 0 0 16px rgba(77, 232, 212, 0.2);
+  }
+  /* Toggle */
+  .toggle {
+    width: 44px; height: 24px; background: rgba(255,255,255,0.08);
+    border-radius: 12px; position: relative; cursor: pointer;
+    transition: background 0.2s; border: 1px solid var(--border);
+  }
+  .toggle.on { background: rgba(77, 232, 212, 0.3); border-color: rgba(77, 232, 212, 0.5); }
+  .toggle-knob {
+    position: absolute; top: 2px; left: 2px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #f4f4f6;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .toggle.on .toggle-knob {
+    transform: translateX(20px);
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+  /* FAQ */
+  .faq-item {
+    background: rgba(20,20,24,0.5); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden; transition: all 0.25s;
+  }
+  .faq-item.open { border-color: rgba(77, 232, 212, 0.3); background: rgba(28,28,36,0.7); }
+  .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+  .faq-item.open .faq-answer { max-height: 240px; }
+  /* Preset card */
+  .preset-card {
+    width: 100%; height: 175px;
+    background: linear-gradient(135deg, rgba(28,28,36,0.8), rgba(15,15,18,0.6));
+    border: 1px solid var(--border); border-radius: 18px;
+    padding: 18px; position: relative; overflow: hidden;
+    cursor: pointer; transition: transform 0.2s, border-color 0.2s;
+  }
+  .preset-card.active {
+    border-color: rgba(77, 232, 212, 0.5);
+    box-shadow: 0 0 30px rgba(77, 232, 212, 0.15);
+  }
+  .preset-card:active { transform: scale(0.98); }
+  .num-display { font-family: 'Space Grotesk', sans-serif; font-variant-numeric: tabular-nums; }
+  /* Toast */
+  .toast {
+    position: absolute; bottom: 30px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(28,28,36,0.95);
+    border: 1px solid rgba(77, 232, 212, 0.3);
+    color: var(--text); padding: 11px 18px;
+    border-radius: 12px; font-size: 12px; font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 20px rgba(77, 232, 212, 0.15);
+    backdrop-filter: blur(10px);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 200; pointer-events: none; white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  /* Bottom sheet */
+  .sheet-backdrop {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px); z-index: 300;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .sheet-backdrop.show { opacity: 1; pointer-events: auto; }
+  .sheet {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to bottom, #1a1a20, #0a0a0d);
+    border-radius: 28px 28px 0 0;
+    border-top: 1px solid var(--border-strong);
+    padding: 20px;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0.16, 1);
+    z-index: 301; max-height: 80%; overflow-y: auto;
+  }
+  .sheet.show { transform: translateY(0); }
+  .sheet-handle { width: 40px; height: 4px; background: var(--border-strong); border-radius: 2px; margin: 0 auto 18px; }
+  *::-webkit-scrollbar { width: 0; height: 0; }
+  .section-label {
+    font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--text-muted);
+    font-weight: 600; font-family: 'Space Grotesk', sans-serif;
+  }
+  .benefit-icon {
+    width: 48px; height: 48px; border-radius: 14px;
+    background: linear-gradient(135deg, rgba(77, 232, 212, 0.15), rgba(77, 232, 212, 0.03));
+    border: 1px solid rgba(77, 232, 212, 0.2);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent); font-size: 19px;
+    box-shadow: 0 0 20px rgba(77, 232, 212, 0.1);
+  }
+  .text-gradient {
+    background: linear-gradient(135deg, #f4f4f6 0%, #a8a8b0 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .text-accent-gradient {
+    background: linear-gradient(135deg, var(--accent) 0%, #88f5e0 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .lift { transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; }
+  .lift:hover { transform: translateY(-2px); }
+  .fade-in { animation: fadeInUp 0.5s ease-out both; }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <div class="island"></div>
+  <div class="status-bar">
+    <span>9:41</span>
+    <div class="status-icons" style="color: var(--text);">
+      <i class="fa-solid fa-signal" style="font-size: 11px;"></i>
+      <i class="fa-solid fa-wifi" style="font-size: 11px;"></i>
+      <i class="fa-solid fa-battery-full" style="font-size: 13px;"></i>
+    </div>
+  </div>
+
+  <div class="screen-area">
+
+    <!-- ===== SPLASH ===== -->
+    <div class="screen active" id="screen-splash">
+      <div class="splash-bg"></div>
+      <canvas id="splash-canvas" style="position: absolute; inset: 0; width: 100%; height: 100%;"></canvas>
+      <div class="splash-content">
+        <div class="splash-anim-1">
+          <div class="splash-logo">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+              <rect x="6" y="18" width="3" height="12" rx="1.5" fill="#4de8d4"/>
+              <rect x="13" y="10" width="3" height="28" rx="1.5" fill="#4de8d4"/>
+              <rect x="20" y="14" width="3" height="20" rx="1.5" fill="#4de8d4"/>
+              <rect x="27" y="6" width="3" height="36" rx="1.5" fill="#4de8d4"/>
+              <rect x="34" y="16" width="3" height="16" rx="1.5" fill="#4de8d4"/>
+              <rect x="41" y="20" width="3" height="8" rx="1.5" fill="#4de8d4"/>
+            </svg>
+          </div>
+        </div>
+        <div class="splash-anim-2" style="margin-top: 30px;">
+          <h1 class="font-display text-3xl font-bold tracking-tight text-gradient">Premusic</h1>
+        </div>
+        <div class="splash-anim-3" style="margin-top: 8px;">
+          <p style="color: var(--text-muted); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 500;">Premium Audio Equalizer</p>
+        </div>
+        <div style="position: absolute; bottom: 70px; left: 0; right: 0; text-align: center;" class="splash-anim-3">
+          <div style="display: inline-flex; gap: 6px;">
+            <span class="loading-dot"></span>
+            <span class="loading-dot"></span>
+            <span class="loading-dot"></span>
+          </div>
+          <p style="color: var(--text-muted); font-size: 10px; margin-top: 10px; letter-spacing: 0.08em;">INITIALIZING AUDIO ENGINE</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ONBOARDING ===== -->
+    <div class="screen" id="screen-onboarding">
+      <div class="splash-bg"></div>
+      <div style="position: relative; z-index: 2; padding: 24px 24px 28px; display: flex; flex-direction: column; height: 100%;">
+        <div style="margin-bottom: 24px;">
+          <div style="display: inline-flex; align-items: center; gap: 10px; padding: 5px 12px 5px 5px; background: rgba(77, 232, 212, 0.08); border: 1px solid rgba(77, 232, 212, 0.2); border-radius: 100px;">
+            <div style="width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #2a9888); display: flex; align-items: center; justify-content: center;">
+              <i class="fa-solid fa-headphones" style="font-size: 10px; color: #001815;"></i>
+            </div>
+            <span style="font-size: 10px; color: var(--accent); font-weight: 600; letter-spacing: 0.06em;">PREMUSIC v2.4</span>
+          </div>
+        </div>
+        <h2 class="font-display" style="font-size: 28px; font-weight: 700; line-height: 1.15; margin-bottom: 10px;">
+          Sound, <span class="text-accent-gradient">sculpted</span><br>to perfection.
+        </h2>
+        <p style="color: var(--text-dim); font-size: 13px; line-height: 1.55; margin-bottom: 22px;">
+          A professional 16-band equalizer with real-time spectrum analysis, bass enhancement, and 3D spatial audio — built for audiophiles.
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 10px; flex: 1;">
+          <div class="card lift fade-in" style="padding: 14px; display: flex; gap: 12px; align-items: flex-start; animation-delay: 0.1s;">
+            <div class="benefit-icon"><i class="fa-solid fa-sliders"></i></div>
+            <div style="flex: 1;">
+              <h3 class="font-display" style="font-size: 14px; font-weight: 600; margin-bottom: 2px;">Professional Equalizer</h3>
+              <p style="font-size: 11px; color: var(--text-dim); line-height: 1.5;">16-band precision control from 20Hz to 20kHz with custom presets.</p>
+            </div>
+          </div>
+          <div class="card lift fade-in" style="padding: 14px; display: flex; gap: 12px; align-items: flex-start; animation-delay: 0.2s;">
+            <div class="benefit-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+            <div style="flex: 1;">
+              <h3 class="font-display" style="font-size: 14px; font-weight: 600; margin-bottom: 2px;">Audio Enhancement</h3>
+              <p style="font-size: 11px; color: var(--text-dim); line-height: 1.5;">Bass boost, treble refinement, volume lift, and 3D spatial effects.</p>
+            </div>
+          </div>
+          <div class="card lift fade-in" style="padding: 14px; display: flex; gap: 12px; align-items: flex-start; animation-delay: 0.3s;">
+            <div class="benefit-icon"><i class="fa-solid fa-wave-square"></i></div>
+            <div style="flex: 1;">
+              <h3 class="font-display" style="font-size: 14px; font-weight: 600; margin-bottom: 2px;">Real-Time Visuals</h3>
+              <p style="font-size: 11px; color: var(--text-dim); line-height: 1.5;">High-fps spectrum analyzer and dual-channel VU metering.</p>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top: 20px;">
+          <button class="btn-primary" onclick="navigateTo('equalizer')" style="width: 100%; padding: 15px; border-radius: 14px; border: none; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: 'Inter', sans-serif;">
+            Get Started
+            <i class="fa-solid fa-arrow-right" style="font-size: 12px;"></i>
+          </button>
+          <p style="text-align: center; font-size: 10px; color: var(--text-muted); margin-top: 12px;">Works with all major streaming apps</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== EQUALIZER ===== -->
+    <div class="screen" id="screen-equalizer">
+      <div style="padding: 4px 18px 0; display: flex; align-items: center; justify-content: space-between;">
+        <button onclick="navigateTo('onboarding')" style="background: none; border: none; color: var(--text-dim); cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+          <i class="fa-solid fa-bars" style="font-size: 15px;"></i>
+        </button>
+        <div style="text-align: center;">
+          <div style="font-size: 9px; color: var(--text-muted); letter-spacing: 0.15em; font-weight: 600; font-family: 'Space Grotesk', sans-serif;">EQUALIZER</div>
+          <div id="current-preset-name" class="font-display" style="font-size: 13px; font-weight: 600; color: var(--accent); margin-top: 1px;">Flat</div>
+        </div>
+        <div style="display: flex; gap: 2px;">
+          <button onclick="savePreset()" style="background: none; border: none; color: var(--text-dim); cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="fa-regular fa-bookmark" style="font-size: 14px;"></i>
+          </button>
+          <button onclick="navigateTo('settings')" style="background: none; border: none; color: var(--text-dim); cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-gear" style="font-size: 14px;"></i>
+          </button>
+        </div>
+      </div>
+
+      <div id="preset-chips" style="padding: 8px 18px 2px; display: flex; gap: 6px; overflow-x: auto;"></div>
+
+      <div style="padding: 4px 18px 0;">
+        <div class="visualizer-container">
+          <canvas id="spectrum-canvas" style="position: absolute; inset: 0; width: 100%; height: 100%;"></canvas>
+          <div style="position: absolute; top: 10px; left: 14px; display: flex; align-items: center; gap: 6px; z-index: 2;">
+            <div style="width: 5px; height: 5px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: pulse 1.5s infinite;"></div>
+            <span style="font-size: 8px; color: var(--text-dim); font-weight: 600; letter-spacing: 0.12em; font-family: 'Space Grotesk', sans-serif;">LIVE SPECTRUM</span>
+          </div>
+          <div style="position: absolute; bottom: 8px; left: 14px; right: 14px; display: flex; gap: 6px; z-index: 2;">
+            <div style="display: flex; align-items: center; gap: 4px; flex: 1;">
+              <span style="font-size: 8px; color: var(--stereo-l); font-weight: 700; font-family: 'Space Grotesk', sans-serif;">L</span>
+              <div class="vu-bar"><div class="vu-fill" id="vu-l" style="background: linear-gradient(to right, var(--stereo-l), #88e4ff); box-shadow: 0 0 6px var(--stereo-l); width: 30%;"></div></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px; flex: 1;">
+              <span style="font-size: 8px; color: var(--stereo-r); font-weight: 700; font-family: 'Space Grotesk', sans-serif;">R</span>
+              <div class="vu-bar"><div class="vu-fill" id="vu-r" style="background: linear-gradient(to right, var(--stereo-r), #ff9bc4); box-shadow: 0 0 6px var(--stereo-r); width: 30%;"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin: 8px 18px 0; padding: 12px 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 0 4px;">
+          <span class="section-label">16-Band EQ</span>
+          <button onclick="resetEQ()" style="background: none; border: none; color: var(--text-muted); font-size: 10px; cursor: pointer; font-family: 'Space Grotesk', sans-serif; display: flex; align-items: center; gap: 4px; font-weight: 500;">
+            <i class="fa-solid fa-rotate-left" style="font-size: 9px;"></i> RESET
+          </button>
+        </div>
+        <div style="display: flex; gap: 2px;">
+          <div class="db-scale">
+            <span>+12</span><span>+6</span><span style="color: var(--text-dim);">0</span><span>-6</span><span>-12</span>
+          </div>
+          <div id="eq-bands" style="display: flex; flex: 1; justify-content: space-between;"></div>
+        </div>
+      </div>
+
+      <div style="padding: 8px 18px 0;">
+        <div class="section-label" style="margin-bottom: 6px;">Audio Effects</div>
+        <div id="knobs-container" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px;"></div>
+      </div>
+
+      <div style="margin-top: auto; padding: 10px 18px 14px;">
+        <div class="card" style="padding: 10px 12px; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 30px; height: 30px; border-radius: 9px; background: rgba(77, 232, 212, 0.1); display: flex; align-items: center; justify-content: center;">
+              <i class="fa-solid fa-tower-broadcast" style="font-size: 11px; color: var(--accent);"></i>
+            </div>
+            <div>
+              <div style="font-size: 12px; font-weight: 600;">System Audio</div>
+              <div style="font-size: 9px; color: var(--text-muted);">Applies globally to streaming apps</div>
+            </div>
+          </div>
+          <div class="toggle on" id="sys-audio-toggle" onclick="toggleSysAudio()">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PRESETS ===== -->
+    <div class="screen" id="screen-presets">
+      <div style="padding: 4px 18px 0; display: flex; align-items: center; justify-content: space-between;">
+        <button onclick="navigateTo('equalizer')" style="background: none; border: none; color: var(--text-dim); cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+          <i class="fa-solid fa-chevron-left" style="font-size: 15px;"></i>
+        </button>
+        <div class="font-display" style="font-size: 14px; font-weight: 600;">Custom Presets</div>
+        <button onclick="addPreset()" style="background: none; border: none; color: var(--accent); cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+          <i class="fa-solid fa-plus" style="font-size: 15px;"></i>
+        </button>
+      </div>
+      <div style="padding: 16px 18px;">
+        <p style="font-size: 11px; color: var(--text-dim); line-height: 1.55; margin-bottom: 16px;">
+          Create up to <span style="color: var(--accent); font-weight: 600;">4 custom sound profiles</span>. Tap a card to activate, or use the edit icon to rename or delete.
+        </p>
+        <div id="preset-cards" style="display: flex; flex-direction: column; gap: 10px;"></div>
+      </div>
+    </div>
+
+    <!-- ===== HELP ===== -->
+    <div class="screen" id="screen-help">
+      <div style="padding: 4px 18px 0; display: flex; align-items: center; justify-content: space-between;">
+        <button onclick="navigateTo('settings')" style="background: none; border: none; color: var(--text-dim); cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+          <i class="fa-solid fa-chevron-left" style="font-size: 15px;"></i>
+        </button>
+        <div class="font-display" style="font-size: 14px; font-weight: 600;">Help & Support</div>
+        <div style="width: 36px;"></div>
+      </div>
+      <div style="padding: 18px;">
+        <div class="card" style="padding: 20px; text-align: center; margin-bottom: 20px; background: linear-gradient(135deg, rgba(77, 232, 212, 0.05), rgba(20, 20, 24, 0.5));">
+          <div style="width: 52px; height: 52px; margin: 0 auto 12px; border-radius: 15px; background: linear-gradient(135deg, rgba(77, 232, 212, 0.15), rgba(77, 232, 212, 0.03)); border: 1px solid rgba(77, 232, 212, 0.2); display: flex; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-headset" style="font-size: 20px; color: var(--accent);"></i>
+          </div>
+          <h3 class="font-display" style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">We're here to help</h3>
+          <p style="font-size: 11px; color: var(--text-dim); line-height: 1.5;">Find quick answers or reach our team anytime.</p>
+        </div>
+        <div class="section-label" style="margin-bottom: 10px;">Frequently Asked</div>
+        <div id="faq-list" style="display: flex; flex-direction: column; gap: 7px; margin-bottom: 22px;"></div>
+        <div class="section-label" style="margin-bottom: 10px;">Contact Support</div>
+        <div style="display: flex; flex-direction: column; gap: 7px;">
+          <button class="card lift" onclick="showToast('Opening mail app...')" style="padding: 13px; display: flex; align-items: center; gap: 11px; cursor: pointer; border: 1px solid var(--border); text-align: left; width: 100%; background: linear-gradient(180deg, rgba(28,28,36,0.6), rgba(20,20,24,0.4));">
+            <div style="width: 36px; height: 36px; border-radius: 11px; background: rgba(77, 232, 212, 0.08); display: flex; align-items: center; justify-content: center;">
+              <i class="fa-solid fa-envelope" style="font-size: 13px; color: var(--accent);"></i>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-size: 12px; font-weight: 600;">Email Support</div>
+              <div style="font-size: 10px; color: var(--text-muted);">support@premusic.app</div>
+            </div>
+            <i class="fa-solid fa-chevron-right" style="font-size: 10px; color: var(--text-muted);"></i>
+          </button>
+          <button class="card lift" onclick="showToast('Live chat — agents online')" style="padding: 13px; display: flex; align-items: center; gap: 11px; cursor: pointer; border: 1px solid var(--border); text-align: left; width: 100%; background: linear-gradient(180deg, rgba(28,28,36,0.6), rgba(20,20,24,0.4));">
+            <div style="width: 36px; height: 36px; border-radius: 11px; background: rgba(77, 232, 212, 0.08); display: flex; align-items: center; justify-content: center;">
+              <i class="fa-solid fa-comment-dots" style="font-size: 13px; color: var(--accent);"></i>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-size: 12px; font-weight: 600;">Live Chat</div>
+              <div style="font-size: 10px; color: var(--text-muted);">Mon–Fri, 9am–6pm</div>
+            </div>
+            <i class="fa-solid fa-chevron-right" style="font-size: 10px; color: var(--text-muted);"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SETTINGS ===== -->
+    <div class="screen" id="screen-settings">
+      <div style="padding: 4px 18px 0; display: flex; align-items: center; justify-content: space-between;">
+        <button onclick="navigateTo('equalizer')" style="background: none; border: none; color: var(--text-dim); cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+          <i class="fa-solid fa-chevron-left" style="font-size: 15px;"></i>
+        </button>
+        <div class="font-display" style="font-size: 14px; font-weight: 600;">Settings</div>
+        <div style="width: 36px;"></div>
+      </div>
+      <div style="padding: 16px 18px;">
+        <div class="card" style="padding: 16px; display: flex; align-items: center; gap: 13px; margin-bottom: 20px;">
+          <div style="width: 46px; height: 46px; border-radius: 14px; background: linear-gradient(135deg, var(--accent), #2a9888); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 18px; color: #001815; box-shadow: 0 0 20px rgba(77, 232, 212, 0.25);">A</div>
+          <div>
+            <div class="font-display" style="font-size: 14px; font-weight: 600;">Audiophile</div>
+            <div style="font-size: 10px; color: var(--text-muted);">Pro Member · Since 2024</div>
+          </div>
+        </div>
+        <div class="section-label" style="margin-bottom: 8px;">Appearance</div>
+        <div class="card" style="padding: 4px; margin-bottom: 20px;">
+          <div style="padding: 13px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 11px;">
+              <div style="width: 30px; height: 30px; border-radius: 9px; background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-moon" style="font-size: 11px; color: var(--text-dim);"></i>
+              </div>
+              <div>
+                <div style="font-size: 12px; font-weight: 500;">Dark Theme</div>
+                <div style="font-size: 9px; color: var(--text-muted);">Pitch black premium</div>
+              </div>
+            </div>
+            <div class="toggle on" id="theme-toggle" onclick="this.classList.toggle('on'); showToast('Theme updated')">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+        </div>
+        <div class="section-label" style="margin-bottom: 8px;">Language</div>
+        <button class="card lift" onclick="openSheet('language')" style="width: 100%; padding: 13px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 11px;">
+            <div style="width: 30px; height: 30px; border-radius: 9px; background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center;">
+              <i class="fa-solid fa-globe" style="font-size: 11px; color: var(--text-dim);"></i>
+            </div>
+            <div style="text-align: left;">
+              <div style="font-size: 12px; font-weight: 500;">Language</div>
+              <div id="lang-label" style="font-size: 9px; color: var(--text-muted);">English (US)</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right" style="font-size: 10px; color: var(--text-muted);"></i>
+        </button>
+        <div class="section-label" style="margin-bottom: 8px;">About</div>
+        <div class="card" style="padding: 4px; margin-bottom: 20px;">
+          <button onclick="openSheet('privacy')" style="width: 100%; padding: 13px; display: flex; align-items: center; justify-content: space-between; background: none; border: none; cursor: pointer; border-bottom: 1px solid var(--border); color: var(--text); font-family: 'Inter', sans-serif;">
+            <div style="display: flex; align-items: center; gap: 11px;">
+              <div style="width: 30px; height: 30px; border-radius: 9px; background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-shield-halved" style="font-size: 11px; color: var(--text-dim);"></i>
+              </div>
+              <span style="font-size: 12px; font-weight: 500;">Privacy Policy</span>
+            </div>
+            <i class="fa-solid fa-chevron-right" style="font-size: 10px; color: var(--text-muted);"></i>
+          </button>
+          <button onclick="navigateTo('help')" style="width: 100%; padding: 13px; display: flex; align-items: center; justify-content: space-between; background: none; border: none; cursor: pointer; border-bottom: 1px solid var(--border); color: var(--text); font-family: 'Inter', sans-serif;">
+            <div style="display: flex; align-items: center; gap: 11px;">
+              <div style="width: 30px; height: 30px; border-radius: 9px; background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-circle-question" style="font-size: 11px; color: var(--text-dim);"></i>
+              </div>
+              <span style="font-size: 12px; font-weight: 500;">Help & Support</span>
+            </div>
+            <i class="fa-solid fa-chevron-right" style="font-size: 10px; color: var(--text-muted);"></i>
+          </button>
+          <div style="padding: 13px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 11px;">
+              <div style="width: 30px; height: 30px; border-radius: 9px; background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-tag" style="font-size: 11px; color: var(--text-dim);"></i>
+              </div>
+              <span style="font-size: 12px; font-weight: 500;">Version</span>
+            </div>
+            <span style="font-size: 10px; color: var(--text-muted); font-family: 'Space Grotesk', sans-serif; font-weight: 500;">2.4.1 · Build 2025</span>
+          </div>
+        </div>
+        <button onclick="navigateTo('onboarding')" style="width: 100%; padding: 13px; border-radius: 13px; background: rgba(255, 82, 82, 0.06); border: 1px solid rgba(255, 82, 82, 0.2); color: var(--danger); font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif;">
+          Sign Out
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="sheet-backdrop" id="sheet-backdrop" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <div id="sheet-content"></div>
+  </div>
+
+</div>
+
+<script>
+// ============ STATE (Riverpod-like store) ============
+const state = {
+  screen: 'splash',
+  eqBands: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  presets: [
+    { name: 'Flat', values: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+    { name: 'Bass Boost', values: [8,7,6,5,3,1,0,-1,0,0,0,0,0,0,0,0] },
+    { name: 'Vocal', values: [-2,-1,0,1,2,3,4,3,2,1,0,-1,-1,0,0,0] },
+    { name: 'Treble', values: [0,0,0,0,0,0,0,1,2,3,4,5,6,7,8,9] }
+  ],
+  activePreset: 0,
+  customPresets: [
+    { name: 'My Rock', values: [6,5,3,1,-1,0,0,1,2,3,4,3,2,1,0,0] },
+    { name: 'Late Night', values: [-4,-3,-2,-1,0,1,1,2,2,2,1,0,-1,-2,-3,-4] },
+    { name: 'Podcast', values: [-3,-2,-1,0,1,2,3,4,4,3,2,1,0,-1,-2,-3] },
+    { name: 'Custom 1', values: [2,3,2,1,0,-1,0,1,2,1,0,-1,0,1,2,3] }
+  ],
+  activeCustom: -1,
+  rotary: { bass: 55, treble: 50, volume: 72, subBass: 35, spatial: 25 },
+  sysAudio: true
+};
+
+const frequencies = ['20','30','50','80','120','200','300','500','800','1k','1.5','2k','3k','5k','8k','16k'];
+
+// ============ NAVIGATION ============
+function navigateTo(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + screen).classList.add('active');
+  state.screen = screen;
+  if (screen === 'equalizer') renderPresetChips();
+  else if (screen === 'presets') renderPresetCards();
+  else if (screen === 'help') renderFAQ();
+}
+
+// ============ SPLASH ============
+function initSplash() {
+  const canvas = document.getElementById('splash-canvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+  }
+  resize();
+  
+  const particles = [];
+  for (let i = 0; i < 50; i++) {
+    particles.push({
+      x: Math.random() * 390,
+      y: 200 + Math.random() * 500,
+      vx: (Math.random() - 0.5) * 0.15,
+      vy: -Math.random() * 0.4 - 0.15,
+      size: Math.random() * 1.2 + 0.4,
+      life: Math.random(),
+      hue: Math.random() > 0.6 ? 1 : 0
+    });
+  }
+  
+  const startTime = performance.now();
+  function animate() {
+    const elapsed = (performance.now() - startTime) / 1000;
+    const rect = canvas.getBoundingClientRect();
+    ctx.clearRect(0, 0, rect.width, rect.height);
+    
+    const cx = rect.width / 2, cy = rect.height / 2;
+    // Expanding wave rings
+    for (let i = 0; i < 4; i++) {
+      const r = Math.max(1, 35 + i * 28 + Math.sin(elapsed * 2 + i) * 6);
+      const alpha = (1 - i / 4) * 0.12 * (1 - Math.min(elapsed / 2.5, 1));
+      ctx.strokeStyle = `rgba(77, 232, 212, ${alpha})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    
+    // Particles rising
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= 0.004;
+      if (p.life <= 0 || p.y < 80) {
+        p.x = Math.random() * rect.width;
+        p.y = rect.height - 50 + Math.random() * 80;
+        p.life = 1;
+        p.vy = -Math.random() * 0.4 - 0.15;
+      }
+      const alpha = p.life * 0.55;
+      const color = p.hue === 0 ? `rgba(77, 232, 212, ${alpha})` : `rgba(255, 94, 156, ${alpha * 0.5})`;
+      ctx.fillStyle = color;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 4;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.shadowBlur = 0;
+    
+    if (elapsed < 2.5) requestAnimationFrame(animate);
+  }
+  animate();
+  
+  setTimeout(() => navigateTo('onboarding'), 2500);
+}
+
+// ============ EQ BANDS ============
+function renderEQBands() {
+  const container = document.getElementById('eq-bands');
+  container.innerHTML = '';
+  for (let i = 0; i < 16; i++) {
+    const band = document.createElement('div');
+    band.className = 'eq-band';
+    band.innerHTML = `
+      <div class="eq-value-label" id="eq-val-${i}">0</div>
+      <div class="eq-track" data-band="${i}">
+        <div class="eq-fill" id="eq-fill-${i}"></div>
+        <div class="eq-thumb" id="eq-thumb-${i}"></div>
+      </div>
+      <div class="eq-freq-label">${frequencies[i]}</div>
+    `;
+    container.appendChild(band);
+    updateEQBand(i);
+    const track = band.querySelector('.eq-track');
+    let dragging = false;
+    function handleMove(clientY) {
+      const rect = track.getBoundingClientRect();
+      const y = clientY - rect.top;
+      let value = 12 - (y / rect.height) * 24;
+      value = Math.max(-12, Math.min(12, Math.round(value)));
+      state.eqBands[i] = value;
+      updateEQBand(i);
+      document.getElementById('current-preset-name').textContent = 'Custom';
+      state.activePreset = -1;
+      renderPresetChips();
+    }
+    track.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      track.setPointerCapture(e.pointerId);
+      handleMove(e.clientY);
+      e.preventDefault();
+    });
+    track.addEventListener('pointermove', (e) => {
+      if (dragging) { handleMove(e.clientY); e.preventDefault(); }
+    });
+    track.addEventListener('pointerup', (e) => {
+      dragging = false;
+      try { track.releasePointerCapture(e.pointerId); } catch(_) {}
+    });
+    track.addEventListener('pointercancel', () => { dragging = false; });
+  }
+}
+
+function updateEQBand(i) {
+  const val = state.eqBands[i];
+  const fillEl = document.getElementById(`eq-fill-${i}`);
+  const thumbEl = document.getElementById(`eq-thumb-${i}`);
+  const valEl = document.getElementById(`eq-val-${i}`);
+  if (!fillEl) return;
+  const trackHeight = 180;
+  const center = trackHeight / 2;
+  const pxPerDb = (trackHeight / 2 - 6) / 12;
+  const offset = val * pxPerDb;
+  const thumbY = center - offset;
+  thumbEl.style.top = `${thumbY}px`;
+  if (val >= 0) {
+    fillEl.style.top = `${thumbY}px`;
+    fillEl.style.height = `${Math.max(0, center - thumbY)}px`;
+    fillEl.style.background = 'linear-gradient(to top, rgba(77, 232, 212, 0.4), var(--accent))';
+    fillEl.style.boxShadow = '0 0 12px var(--accent-glow)';
+  } else {
+    fillEl.style.top = `${center}px`;
+    fillEl.style.height = `${Math.max(0, thumbY - center)}px`;
+    fillEl.style.background = 'linear-gradient(to bottom, rgba(255, 94, 156, 0.4), var(--stereo-r))';
+    fillEl.style.boxShadow = '0 0 12px rgba(255, 94, 156, 0.35)';
+  }
+  valEl.textContent = `${val > 0 ? '+' : ''}${val}`;
+  if (val === 0) valEl.style.color = 'var(--text-muted)';
+  else if (val > 0) valEl.style.color = 'var(--accent)';
+  else valEl.style.color = 'var(--stereo-r)';
+}
+
+function resetEQ() {
+  state.eqBands = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+  for (let i = 0; i < 16; i++) updateEQBand(i);
+  document.getElementById('current-preset-name').textContent = 'Flat';
+  state.activePreset = 0;
+  renderPresetChips();
+  showToast('Equalizer reset');
+}
+
+// ============ PRESET CHIPS ============
+function renderPresetChips() {
+  const container = document.getElementById('preset-chips');
+  if (!container) return;
+  container.innerHTML = '';
+  state.presets.forEach((preset, idx) => {
+    const chip = document.createElement('div');
+    chip.className = 'preset-chip' + (idx === state.activePreset ? ' active' : '');
+    chip.textContent = preset.name;
+    chip.onclick = () => loadPreset(idx);
+    container.appendChild(chip);
+  });
+  const custom = document.createElement('div');
+  custom.className = 'preset-chip';
+  custom.innerHTML = '<i class="fa-solid fa-sliders" style="font-size: 10px; margin-right: 4px;"></i>Custom';
+  custom.onclick = () => navigateTo('presets');
+  container.appendChild(custom);
+}
+
+function loadPreset(idx) {
+  state.activePreset = idx;
+  state.eqBands = [...state.presets[idx].values];
+  for (let i = 0; i < 16; i++) updateEQBand(i);
+  document.getElementById('current-preset-name').textContent = state.presets[idx].name;
+  renderPresetChips();
+  showToast(`Loaded "${state.presets[idx].name}"`);
+}
+
+function savePreset() {
+  showToast('Preset saved to library');
+}
+
+// ============ PRESETS SCREEN ============
+function renderPresetCards() {
+  const container = document.getElementById('preset-cards');
+  if (!container) return;
+  container.innerHTML = '';
+  state.customPresets.forEach((preset, idx) => {
+    const card = document.createElement('div');
+    card.className = 'preset-card' + (idx === state.activeCustom ? ' active' : '');
+    const vizId = `preset-viz-${idx}`;
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+        <div>
+          <div class="font-display" style="font-size: 15px; font-weight: 600;">${preset.name}</div>
+          <div style="font-size: 9px; color: var(--text-muted); margin-top: 1px; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.06em; text-transform: uppercase;">16 bands · Custom</div>
+        </div>
+        <button onclick="event.stopPropagation(); renamePreset(${idx})" style="background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text-dim); width: 26px; height: 26px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+          <i class="fa-solid fa-pen" style="font-size: 9px;"></i>
+        </button>
+      </div>
+      <canvas id="${vizId}" style="width: 100%; height: 70px; margin-top: 2px;"></canvas>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+        <div style="font-size: 9px; color: var(--text-muted); font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500;">${idx === state.activeCustom ? 'ACTIVE' : 'Tap to activate'}</div>
+        ${idx === state.activeCustom ? '<i class="fa-solid fa-circle-check" style="font-size: 11px; color: var(--accent);"></i>' : ''}
+      </div>
+    `;
+    card.onclick = () => activateCustomPreset(idx);
+    container.appendChild(card);
+    setTimeout(() => drawPresetViz(vizId, preset.values), 10);
+  });
+}
+
+function drawPresetViz(canvasId, values) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, rect.width, rect.height);
+  const w = rect.width, h = rect.height, cy = h / 2;
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, cy);
+  ctx.lineTo(w, cy);
+  ctx.stroke();
+  const barW = w / 16 * 0.6;
+  const gap = w / 16 * 0.4;
+  for (let i = 0; i < 16; i++) {
+    const val = values[i];
+    const barH = Math.abs(val) / 12 * (h / 2 - 4);
+    const x = i * (barW + gap) + gap/2;
+    if (val >= 0) {
+      const grad = ctx.createLinearGradient(0, cy - barH, 0, cy);
+      grad.addColorStop(0, 'rgba(77, 232, 212, 0.95)');
+      grad.addColorStop(1, 'rgba(77, 232, 212, 0.3)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(x, cy - barH, barW, barH);
+    } else {
+      const grad = ctx.createLinearGradient(0, cy, 0, cy + barH);
+      grad.addColorStop(0, 'rgba(255, 94, 156, 0.3)');
+      grad.addColorStop(1, 'rgba(255, 94, 156, 0.95)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(x, cy, barW, barH);
+    }
+  }
+}
+
+function activateCustomPreset(idx) {
+  state.activeCustom = idx;
+  state.eqBands = [...state.customPresets[idx].values];
+  for (let i = 0; i < 16; i++) updateEQBand(i);
+  document.getElementById('current-preset-name').textContent = state.customPresets[idx].name;
+  renderPresetCards();
+  showToast(`Activated "${state.customPresets[idx].name}"`);
+  setTimeout(() => navigateTo('equalizer'), 350);
+}
+
+function addPreset() {
+  if (state.customPresets.length >= 4) {
+    showToast('Maximum 4 custom presets');
+    return;
+  }
+  state.customPresets.push({
+    name: `Custom ${state.customPresets.length + 1}`,
+    values: [...state.eqBands]
+  });
+  renderPresetCards();
+  showToast('New preset created');
+}
+
+function renamePreset(idx) {
+  openSheet('rename', idx);
+}
+
+// ============ KNOBS ============
+const knobConfigs = [
+  { key: 'bass', label: 'Bass', color: 'var(--accent)' },
+  { key: 'treble', label: 'Treble', color: 'var(--stereo-l)' },
+  { key: 'volume', label: 'Volume', color: 'var(--gold)' },
+  { key: 'subBass', label: 'Sub-Bass', color: 'var(--stereo-r)' },
+  { key: 'spatial', label: '3D Spatial', color: 'var(--accent)' }
+];
+
+function renderKnobs() {
+  const container = document.getElementById('knobs-container');
+  if (!container) return;
+  container.innerHTML = '';
+  knobConfigs.forEach(cfg => {
+    const wrap = document.createElement('div');
+    wrap.className = 'knob-container';
+    wrap.innerHTML = `
+      <div class="knob" id="knob-${cfg.key}">
+        <svg class="knob-ring" viewBox="0 0 68 68">
+          <circle cx="34" cy="34" r="31" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="2"/>
+          <circle id="knob-arc-${cfg.key}" cx="34" cy="34" r="31" fill="none" stroke="${cfg.color}" stroke-width="2"
+                  stroke-dasharray="195" stroke-dashoffset="195" stroke-linecap="round"
+                  transform="rotate(135 34 34)" style="filter: drop-shadow(0 0 4px ${cfg.color});"/>
+        </svg>
+        <div class="knob-indicator" id="knob-ind-${cfg.key}"></div>
+      </div>
+      <div style="text-align: center;">
+        <div class="num-display" id="knob-val-${cfg.key}" style="font-size: 13px; font-weight: 700; color: ${cfg.color};">${state.rotary[cfg.key]}</div>
+        <div style="font-size: 8px; color: var(--text-muted); margin-top: 1px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; font-family: 'Space Grotesk', sans-serif;">${cfg.label}</div>
+      </div>
+    `;
+    container.appendChild(wrap);
+    updateKnob(cfg.key);
+    const knobEl = wrap.querySelector('.knob');
+    let startY = 0, startVal = 0, dragging = false;
+    knobEl.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      startY = e.clientY;
+      startVal = state.rotary[cfg.key];
+      knobEl.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    knobEl.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const delta = startY - e.clientY;
+      state.rotary[cfg.key] = Math.max(0, Math.min(100, Math.round(startVal + delta * 0.5)));
+      updateKnob(cfg.key);
+      e.preventDefault();
+    });
+    knobEl.addEventListener('pointerup', (e) => {
+      dragging = false;
+      try { knobEl.releasePointerCapture(e.pointerId); } catch(_) {}
+    });
+    knobEl.addEventListener('pointercancel', () => { dragging = false; });
+  });
+}
+
+function updateKnob(key) {
+  const val = state.rotary[key];
+  const rotation = -135 + (val / 100) * 270;
+  const indEl = document.getElementById(`knob-ind-${key}`);
+  if (indEl) {
+    indEl.style.transform = `translateX(-50%) rotate(${rotation}deg)`;
+    indEl.style.transformOrigin = '50% 22px';
+  }
+  const arcLen = 195;
+  const arcVisible = (val / 100) * (arcLen * 0.75);
+  const arcEl = document.getElementById(`knob-arc-${key}`);
+  if (arcEl) arcEl.setAttribute('stroke-dashoffset', arcLen - arcVisible);
+  const valEl = document.getElementById(`knob-val-${key}`);
+  if (valEl) valEl.textContent = val;
+}
+
+// ============ SPECTRUM VISUALIZER ============
+let spectrumData = new Array(48).fill(0);
+let spectrumTarget = new Array(48).fill(0);
+let vuL = 0.2, vuR = 0.2, vuLT = 0.3, vuRT = 0.3;
+let lastSpecUpdate = 0;
+
+function initSpectrum() {
+  const canvas = document.getElementById('spectrum-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.max(1, rect.width * dpr);
+    canvas.height = Math.max(1, rect.height * dpr);
+  }
+  resize();
+  
+  function animate() {
+    requestAnimationFrame(animate);
+    if (state.screen !== 'equalizer') return;
+    const rect = canvas.getBoundingClientRect();
+    if (canvas.width !== rect.width * dpr) resize();
+    const w = rect.width, h = rect.height;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, h);
+    
+    const now = performance.now();
+    if (now - lastSpecUpdate > 55) {
+      lastSpecUpdate = now;
+      const vol = state.rotary.volume / 100;
+      const bassBoost = state.rotary.bass / 100;
+      const trebleBoost = state.rotary.treble / 100;
+      const subBass = state.rotary.subBass / 100;
+      for (let i = 0; i < 48; i++) {
+        const norm = i / 48;
+        const bassFactor = i < 6 ? 1.1 + subBass * 0.5 : (i < 14 ? 0.85 : 0.55);
+        const trebleFactor = i > 38 ? 0.7 + trebleBoost * 0.5 : 1.0;
+        const noise = Math.random() * 0.35 + 0.25;
+        const wave = Math.sin(now * 0.0025 + i * 0.4) * 0.18 + 0.5;
+        const bassAdd = i < 8 ? bassBoost * 0.4 : 0;
+        const trebleAdd = i > 36 ? trebleBoost * 0.3 : 0;
+        spectrumTarget[i] = Math.min(1, (noise * wave * bassFactor * trebleFactor + bassAdd + trebleAdd) * vol);
+      }
+      vuLT = (Math.random() * 0.55 + 0.25) * vol;
+      vuRT = (Math.random() * 0.55 + 0.25) * vol;
+    }
+    
+    for (let i = 0; i < 48; i++) {
+      spectrumData[i] += (spectrumTarget[i] - spectrumData[i]) * 0.22;
+    }
+    vuL += (vuLT - vuL) * 0.18;
+    vuR += (vuRT - vuR) * 0.18;
+    
+    const barCount = 48;
+    const totalBarW = w * 0.85;
+    const barW = totalBarW / barCount * 0.65;
+    const gap = totalBarW / barCount * 0.35;
+    const startX = (w - totalBarW) / 2;
+    
+    for (let i = 0; i < barCount; i++) {
+      const eqIdx = Math.min(15, Math.floor(i / 3));
+      const eqVal = state.eqBands[eqIdx] || 0;
+      const eqMod = 1 + eqVal / 30;
+      const barH = Math.max(2, spectrumData[i] * (h - 35) * 0.85 * eqMod);
+      const x = startX + i * (barW + gap);
+      const y = h - barH - 25;
+      
+      let c1, c2;
+      if (i < 16) { c1 = 'rgba(77, 232, 212, 0.95)'; c2 = 'rgba(77, 232, 212, 0.25)'; }
+      else if (i < 32) { c1 = 'rgba(136, 245, 224, 0.9)'; c2 = 'rgba(77, 232, 212, 0.25)'; }
+      else { c1 = 'rgba(255, 94, 156, 0.95)'; c2 = 'rgba(255, 94, 156, 0.25)'; }
+      
+      const grad = ctx.createLinearGradient(0, y, 0, y + barH);
+      grad.addColorStop(0, c1);
+      grad.addColorStop(1, c2);
+      ctx.fillStyle = grad;
+      ctx.shadowColor = c1;
+      ctx.shadowBlur = 6;
+      
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(x, y, barW, barH, [2, 2, 0, 0]);
+      } else {
+        ctx.rect(x, y, barW, barH);
+      }
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+    
+    const vuLEl = document.getElementById('vu-l');
+    const vuREl = document.getElementById('vu-r');
+    if (vuLEl) vuLEl.style.width = (Math.min(1, vuL) * 100) + '%';
+    if (vuREl) vuREl.style.width = (Math.min(1, vuR) * 100) + '%';
+  }
+  animate();
+}
+
+// ============ TOAST ============
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(window.toastTimer);
+  window.toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+// ============ SHEET ============
+function openSheet(type, data) {
+  const backdrop = document.getElementById('sheet-backdrop');
+  const sheet = document.getElementById('sheet');
+  const content = document.getElementById('sheet-content');
+  if (type === 'language') {
+    const langs = ['English (US)', 'Español', 'Français', 'Deutsch', '日本語', '中文', '한국어', 'Português'];
+    content.innerHTML = `
+      <h3 class="font-display" style="font-size: 17px; font-weight: 600; margin-bottom: 14px;">Select Language</h3>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        ${langs.map((l, i) => `
+          <button onclick="selectLang('${l}')" style="padding: 12px 14px; background: ${i === 0 ? 'rgba(77, 232, 212, 0.08)' : 'transparent'}; border: 1px solid ${i === 0 ? 'rgba(77, 232, 212, 0.3)' : 'var(--border)'}; border-radius: 11px; color: ${i === 0 ? 'var(--accent)' : 'var(--text)'}; font-size: 13px; font-weight: 500; cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; font-family: 'Inter', sans-serif;">
+            ${l}
+            ${i === 0 ? '<i class="fa-solid fa-check" style="font-size: 11px;"></i>' : ''}
+          </button>
+        `).join('')}
+      </div>
+    `;
+  } else if (type === 'privacy') {
+    content.innerHTML = `
+      <h3 class="font-display" style="font-size: 17px; font-weight: 600; margin-bottom: 3px;">Privacy Policy</h3>
+      <p style="font-size: 10px; color: var(--text-muted); margin-bottom: 14px; font-family: 'Space Grotesk', sans-serif;">Last updated: November 2025</p>
+      <div style="font-size: 12px; color: var(--text-dim); line-height: 1.65; max-height: 380px; overflow-y: auto;">
+        <p style="margin-bottom: 11px;">Premusic is committed to protecting your privacy. We collect minimal data necessary to operate the equalizer and improve audio quality.</p>
+        <p style="margin-bottom: 11px;"><strong style="color: var(--text);">Audio Data:</strong> All audio processing happens on-device. We do not transmit audio content to our servers.</p>
+        <p style="margin-bottom: 11px;"><strong style="color: var(--text);">Permissions:</strong> Microphone access is not required. Audio Session API is used solely for equalizer output routing.</p>
+        <p style="margin-bottom: 11px;"><strong style="color: var(--text);">Third-Party:</strong> Premusic operates within system permission boundaries and remains compatible with popular streaming apps.</p>
+        <p style="margin-bottom: 11px;"><strong style="color: var(--text);">Data Storage:</strong> Preset configurations are stored locally on your device.</p>
+        <p>For questions, contact privacy@premusic.app</p>
+      </div>
+    `;
+  } else if (type === 'rename') {
+    const preset = state.customPresets[data];
+    content.innerHTML = `
+      <h3 class="font-display" style="font-size: 17px; font-weight: 600; margin-bottom: 14px;">Edit Preset</h3>
+      <input id="rename-input" type="text" value="${preset.name}" style="width: 100%; padding: 13px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 11px; color: var(--text); font-size: 14px; font-family: 'Inter', sans-serif; outline: none; margin-bottom: 14px;" autofocus/>
+      <div style="display: flex; gap: 8px;">
+        <button onclick="closeSheet()" class="btn-ghost" style="flex: 1; padding: 12px; border-radius: 11px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif;">Cancel</button>
+        <button onclick="confirmRename(${data})" class="btn-primary" style="flex: 1; padding: 12px; border-radius: 11px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif;">Save</button>
+      </div>
+      <button onclick="deletePreset(${data})" style="width: 100%; margin-top: 10px; padding: 12px; background: rgba(255, 82, 82, 0.06); border: 1px solid rgba(255, 82, 82, 0.2); color: var(--danger); font-size: 12px; font-weight: 500; cursor: pointer; border-radius: 11px; font-family: 'Inter', sans-serif;">Delete Preset</button>
+    `;
+    setTimeout(() => {
+      const input = document.getElementById('rename-input');
+      if (input) { input.focus(); input.select(); }
+    }, 100);
+  }
+  backdrop.classList.add('show');
+  sheet.classList.add('show');
+}
+
+function closeSheet() {
+  document.getElementById('sheet-backdrop').classList.remove('show');
+  document.getElementById('sheet').classList.remove('show');
+}
+
+function selectLang(lang) {
+  document.getElementById('lang-label').textContent = lang;
+  closeSheet();
+  showToast('Language updated');
+}
+
+function confirmRename(idx) {
+  const input = document.getElementById('rename-input');
+  if (input && input.value.trim()) {
+    state.customPresets[idx].name = input.value.trim();
+    renderPresetCards();
+    showToast('Preset renamed');
+  }
+  closeSheet();
+}
+
+function deletePreset(idx) {
+  state.customPresets.splice(idx, 1);
+  if (state.activeCustom === idx) state.activeCustom = -1;
+  else if (state.activeCustom > idx) state.activeCustom--;
+  renderPresetCards();
+  closeSheet();
+  showToast('Preset deleted');
+}
+
+// ============ FAQ ============
+const faqData = [
+  { q: 'OTP delivery delays or verification failures', a: 'OTP delivery can take 30–60 seconds during peak hours. Ensure stable network, check SMS spam folder, and verify your country code. After 3 failed attempts, use "Resend Code" or switch to email verification.' },
+  { q: 'Audio effects not applying to external media players', a: 'Enable "System Audio" toggle in the Equalizer screen. Grant background audio processing permission in Settings → Apps → Premusic → Audio Effects. Some streaming apps may require explicit "Allow External EQ" setting within their audio menu.' },
+  { q: 'System audio and background permissions', a: 'Premusic requires Audio Session permission to apply EQ globally. Go to Settings → Privacy → System Audio → Allow Premusic. Background processing ensures EQ persists when the app is minimized.' },
+  { q: 'Equalizer has no effect on my music', a: 'Verify the active preset is not "Flat". Check that the Volume knob is above 0% and System Audio is enabled. Restart the audio source after toggling permissions for changes to take effect.' },
+  { q: 'Battery usage seems high', a: 'Real-time spectrum analysis uses additional CPU. Disable "Live Spectrum" in Settings → Performance if needed. Background EQ processing typically adds less than 2% battery drain per hour.' }
+];
+
+function renderFAQ() {
+  const container = document.getElementById('faq-list');
+  if (!container) return;
+  container.innerHTML = '';
+  faqData.forEach((item, idx) => {
+    const el = document.createElement('div');
+    el.className = 'faq-item';
+    el.innerHTML = `
+      <button onclick="toggleFAQ(${idx})" style="width: 100%; padding: 13px; background: none; border: none; text-align: left; cursor: pointer; display: flex; align-items: center; justify-content: space-between; color: var(--text); font-family: 'Inter', sans-serif;">
+        <span style="font-size: 12px; font-weight: 500; flex: 1; padding-right: 10px; line-height: 1.4;">${item.q}</span>
+        <i class="fa-solid fa-chevron-down" id="faq-icon-${idx}" style="font-size: 10px; color: var(--text-muted); transition: transform 0.25s;"></i>
+      </button>
+      <div class="faq-answer" id="faq-ans-${idx}">
+        <div style="padding: 0 13px 13px; font-size: 11px; color: var(--text-dim); line-height: 1.55;">${item.a}</div>
+      </div>
+    `;
+    container.appendChild(el);
+  });
+}
+
+function toggleFAQ(idx) {
+  const items = document.querySelectorAll('.faq-item');
+  if (!items[idx]) return;
+  const item = items[idx];
+  const icon = document.getElementById(`faq-icon-${idx}`);
+  item.classList.toggle('open');
+  if (icon) icon.style.transform = item.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0)';
+}
+
+// ============ SYSTEM AUDIO ============
+function toggleSysAudio() {
+  state.sysAudio = !state.sysAudio;
+  const el = document.getElementById('sys-audio-toggle');
+  el.classList.toggle('on');
+  showToast(state.sysAudio ? 'System audio enabled' : 'System audio disabled');
+}
+
+// ============ INIT ============
+window.addEventListener('load', () => {
+  // roundRect polyfill
+  if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+      if (typeof r === 'number') r = [r, r, r, r];
+      else if (Array.isArray(r) && r.length === 1) r = [r[0], r[0], r[0], r[0]];
+      this.beginPath();
+      this.moveTo(x + r[0], y);
+      this.lineTo(x + w - r[1], y);
+      this.quadraticCurveTo(x + w, y, x + w, y + r[1]);
+      this.lineTo(x + w, y + h - r[2]);
+      this.quadraticCurveTo(x + w, y + h, x + w - r[2], y + h);
+      this.lineTo(x + r[3], y + h);
+      this.quadraticCurveTo(x, y + h, x, y + h - r[3]);
+      this.lineTo(x, y + r[0]);
+      this.quadraticCurveTo(x, y, x + r[0], y);
+      this.closePath();
+      return this;
+    };
+  }
+  initSplash();
+  renderEQBands();
+  renderKnobs();
+  renderPresetChips();
+  initSpectrum();
+});
+</script>
+</body>
+</html>
